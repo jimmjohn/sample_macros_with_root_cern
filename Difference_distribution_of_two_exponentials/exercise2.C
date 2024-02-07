@@ -1,0 +1,83 @@
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <vector>
+#include <cmath>
+#include <TMath.h>
+#include "TF1.h"
+#include "TH1F.h"
+#include "TGraph.h"
+#include "TCanvas.h"
+#include "TMinuit.h"
+#include "TLatex.h"
+#include "TGraphErrors.h"
+#include "TLegend.h"
+#include <TStyle.h>
+#include <TGraph2D.h>
+#include <TRandom.h>
+#include <TF2.h>
+#include <TH1.h>
+#include <tgmath.h> 
+
+using namespace std;
+
+void exercise2()
+{
+unsigned int i;
+double x1,x2,normalization;
+TCanvas *c1 = new TCanvas("c1", "canvas",3000,1000);
+c1->cd();
+c1->Divide(3,1);
+gStyle->SetOptFit(1111);
+
+
+// First exponential distribution,tau=0.5
+//
+
+gPad->SetLogy();
+gPad->SetLeftMargin(0.15); 
+gPad->SetRightMargin(0.15);
+gPad->SetTopMargin(0.15); 
+gPad->SetBottomMargin(0.15);
+double tau1=0.5,tau2=1.0,t1,t2,t3;
+auto fun1 = new TH1D("fun1","Exponential Distribution 1",10000,0,10);
+auto fun2 = new TH1D("fun2","Exponential Distribution 2",10000,0,10);
+auto fun3 = new TH1D("fun3","Difference Distribution 3",10000,0,10);
+for(i=0;i<1000000;i++)
+{
+x1=(double)gRandom->Uniform(0,1);
+x2=(double)gRandom->Uniform(0,1);
+t1=-1.0*tau1*log(x1);
+t2=-1.0*tau2*log(x1);
+fun1->Fill(t1);
+fun2->Fill(t2);
+fun3->Fill(t2-t1);
+//cout<<t1-t2<<endl;
+}
+c1->cd(1);
+normalization = fun1->GetEntries();
+fun1->Scale(1/normalization);
+TF1  *f1 = new TF1("f1","[0]*exp(-x/[1])/[1]",0,10);
+f1->SetParameters(400,0.5);
+fun1->Fit(f1);
+fun1->Draw("");
+
+c1->cd(2);
+normalization = fun2->GetEntries();
+fun2->Scale(1/normalization);
+TF1  *f2 = new TF1("f2","[0]*exp(-x/[1])/[1]",0,10);
+f2->SetParameters(400,1);
+fun2->Fit(f2);
+fun2->Draw("");
+
+c1->cd(3);
+normalization = fun3->GetEntries();
+fun3->Scale(1/normalization);
+TF1  *f3 = new TF1("f3","[0]*exp(-x/[1])/[1]",0,10);
+f3->SetParameters(400,1);
+fun3->Fit(f3);
+fun3->Draw("");
+
+
+}
+
