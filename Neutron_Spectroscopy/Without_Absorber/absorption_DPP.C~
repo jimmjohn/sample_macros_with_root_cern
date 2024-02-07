@@ -1,0 +1,118 @@
+#include "TFile.h"
+#include "TTree.h"
+#include <cstdio>
+#include<iostream>
+
+#include <stdlib.h>
+#include <fstream>
+#include <iomanip>
+#include <vector>
+#include <cmath>
+#include <TMath.h>
+#include "TF1.h"
+#include "TH1F.h"
+#include "TGraph.h"
+#include "TCanvas.h"
+#include "TMinuit.h"
+#include "TLatex.h"
+#include "TGraphErrors.h"
+#include "TLegend.h"
+#include <TStyle.h>
+#include <TGraph2D.h>
+#include <TRandom.h>
+#include <TF2.h>
+#include <TH1.h>
+#include "TStyle.h"
+
+
+void absorption()
+{
+gROOT->Reset();
+
+
+UInt_t time, dummy, tstamp,dum;
+UInt_t elong, eshort,el,es;
+
+
+double psd_0,psd_1;
+
+ifstream fh_inp0;
+ ifstream fh_inp1;
+
+fh_inp0.open("AmBe_blank_001_ls_0.dat", ios::in | ios::binary); 
+fh_inp1.open("AmBe_blank_001_ls_1.dat", ios::in | ios::binary); 
+
+auto h_ch0_eraw = new TH1F("Ch_0_eraw","Ch_0_eraw",4096,0,65536);
+auto h_ch1_eraw = new TH1F("Ch_1_eraw","Ch_1_eraw",4096,0,65536);
+
+TH2F *h_ch0_elong_psd =new TH2F("Channel_0_elong_eshort","Channel_0_elong_eshort",4096,0,65536,512,0,1);
+TH2F *h_ch1_elong_psd =new TH2F("Channel_1_elong_eshort","Channel_1_elong_eshort",4096,0,65536,512,0,1);
+
+while ( ! fh_inp0.eof())
+
+{
+//cout<<"hello"<<endl;
+
+  fh_inp0.read((char*)&tstamp,4);
+  fh_inp0.read((char*)&el,2);
+  fh_inp0.read((char*)&dum,4);
+  fh_inp0.read((char*)&es,2);
+
+time = tstamp;
+elong =el;
+//cout<<elong<<endl;
+dummy = dum;
+eshort=es;
+
+psd_0 = double(elong-eshort)/double (elong);
+
+h_ch0_eraw->Fill(elong);
+h_ch0_elong_psd->Fill(elong, psd_0);
+
+}
+
+
+TCanvas *mycanvas6= new TCanvas("My Canvas6","abc",600,400);
+h_ch0_eraw->Draw();
+
+
+TCanvas *mycanvas7= new TCanvas("My Canvas7","abc1",600,400);
+h_ch0_elong_psd->Draw("colz");
+
+
+//*********************************ch1*****************************//
+
+while ( ! fh_inp1.eof())
+
+{
+//cout<<"hello"<<endl;
+ 
+
+  fh_inp1.read((char*)&tstamp,4);
+  fh_inp1.read((char*)&el,2);
+  fh_inp1.read((char*)&dum,4);
+  fh_inp1.read((char*)&es,2);
+
+
+time = tstamp;
+elong =el;
+//cout<<elong<<endl;
+dummy = dum;
+eshort=es;
+
+psd_1 = double(elong-eshort)/double (elong);
+
+h_ch1_eraw->Fill(elong);
+h_ch1_elong_psd->Fill(elong, psd_1);
+
+}
+
+
+TCanvas *mycanvas8= new TCanvas("My Canvas8","abc3",600,400);
+h_ch1_eraw->Draw();
+
+
+TCanvas *mycanvas9= new TCanvas("My Canvas9","abc4",600,400);
+h_ch1_elong_psd->Draw("colz");
+
+}

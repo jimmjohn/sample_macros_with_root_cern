@@ -1,0 +1,131 @@
+#include "TFile.h"
+#include "TTree.h"
+#include <cstdio>
+#include<iostream>
+
+#include <stdlib.h>
+#include <fstream>
+#include <iomanip>
+#include <vector>
+#include <cmath>
+#include <TMath.h>
+#include "TF1.h"
+#include "TH1F.h"
+#include "TGraph.h"
+#include "TCanvas.h"
+#include "TMinuit.h"
+#include "TLatex.h"
+#include "TGraphErrors.h"
+#include "TLegend.h"
+#include <TStyle.h>
+#include <TGraph2D.h>
+#include <TRandom.h>
+#include <TF2.h>
+#include <TH1.h>
+#include "TStyle.h"
+
+void read_binary()
+{
+
+double psd0, psd1;
+UInt_t time;
+UShort_t ql;
+UInt_t ex;
+UShort_t qs;
+
+ifstream fin1("AmBe_blank_001_ls_0.dat", ios::in | ios::binary);
+ifstream fin2("AmBe_blank_001_ls_1.dat", ios::in | ios::binary);
+
+auto h2a = new TH2F("h2a","Energy_0 Vs PSD",4096,0,65536,512,0,1);
+auto h2b = new TH2F("h2b","Energy_1 Vs PSD",4096,0,65536,512,0,1);
+
+if (!fin1) {
+printf("Error :  AmBe_blank_001_ls_0.dat not found!\n");
+return;
+}
+if (!fin2) {
+printf("Error :  AmBe_blank_001_ls_1.dat not found!\n");
+return;
+}
+
+TFile *fout = TFile::Open("AmBe_blank_001_ls_0.root", "recreate");
+TTree *tree = new TTree("tree", "A TTree from AmBe_blank_Both_Channels.root");
+tree->Branch("h2a","TH2F",&h2a,15000000,0);
+tree->Branch("h2b","TH2F",&h2b,15000000,0);
+
+while(!fin1.eof())
+{
+fin1.read((char*)&time,4);  // read record
+fin1.read((char*)&ql,2);    // read record
+fin1.read((char*)&ex,4);    // read record
+fin1.read((char*)&qs,2);    // read record
+psd0=double((ql-qs))/double(ql);
+h2a->Fill(ql,psd0);
+}
+
+while(!fin2.eof())
+{
+fin2.read((char*)&time,4);  // read record
+fin2.read((char*)&ql,2);    // read record
+fin2.read((char*)&ex,4);    // read record
+fin2.read((char*)&qs,2);    // read record
+psd1=double((ql-qs))/double(ql);
+h2b->Fill(ql,psd1);
+}
+
+tree->Fill();
+tree->Print();
+fout->Write();
+
+//auto h1a = new TH1F("h1a","Energy histogram channel 0",4096,0,65536);
+TH1D *h1a=h2a->ProjectionX();
+//auto h1b = new TH1F("h1b","Energy histogram channel 1",4096,0,65536);
+TH1D *h1b=h2b->ProjectionX();
+
+TCanvas *canvas= new TCanvas("canvas","Canvas",1000,1000);
+//canvas->Divide(2,2);
+//canvas->cd(1);
+//h2a->Draw("colz");
+//canvas->cd(2);
+//h2b->Draw("colz");
+//canvas->cd(3);
+//h1a->Draw("colz");
+//canvas->cd(4);
+//h1b->Draw("colz");
+
+   TCutG *cutg = new TCutG("CUTG",16);
+   cutg->SetVarX("Energy_1 Vs PSD");
+   cutg->SetVarY("");
+   cutg->SetTitle("Graph");
+   cutg->SetFillColor(1);
+   cutg->SetPoint(0,1751.74,0.497559);
+   cutg->SetPoint(1,6579.64,0.426107);
+   cutg->SetPoint(2,13821.5,0.381874);
+   cutg->SetPoint(3,19166.7,0.368264);
+   cutg->SetPoint(4,26006.2,0.373935);
+   cutg->SetPoint(5,41179.6,0.424973);
+   cutg->SetPoint(6,44110.8,0.411363);
+   cutg->SetPoint(7,43018.8,0.390948);
+   cutg->SetPoint(8,34455,0.347849);
+   cutg->SetPoint(9,21235.8,0.278665);
+   cutg->SetPoint(10,17384.9,0.27186);
+   cutg->SetPoint(11,8188.94,0.278665);
+   cutg->SetPoint(12,1636.79,0.303617);
+   cutg->SetPoint(13,1751.74,0.498694);
+   cutg->SetPoint(14,1866.69,0.497559);
+   cutg->SetPoint(15,1751.74,0.497559);
+
+//h2b->Draw("colz[CUTG]");
+
+
+TH1D *hneutronproject=h2b->ProjectionX("[CUTG]");
+canvas->Divide(2,1);
+canvas->cd(1);
+h1b->Draw("colz");
+canvas->cd(2);
+hneutronproject->Draw("colz");
+
+
+}
+
+
