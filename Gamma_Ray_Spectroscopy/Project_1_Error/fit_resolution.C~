@@ -1,0 +1,44 @@
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <vector>
+#include <cmath>
+
+#include <TMath.h>
+#include "TF1.h"
+#include "TH1F.h"
+#include "TGraph.h"
+#include "TCanvas.h"
+#include "TMinuit.h"
+#include "TLatex.h"
+#include "TGraphErrors.h"
+#include "TLegend.h"
+#include <TStyle.h>
+
+
+void pmtgain(int ityp=0) {
+  //Range in Y-axis and X-axis
+  // Color option in stat box
+  // c1->Update
+  // Fit examples 
+  // option "0", "Q", "V"
+  // ityp = 0 : no fit, no range set
+  // ityp = 1 : no fit but range set
+  // ityp = 2 : fit with range in Yaxis
+  // ityp = 3 : fit on both graph 
+  // ityp = 4 : fit with range in Xaxis (but it can only reduce the range, not widen 
+
+
+  gStyle->SetPadLeftMargin(0.08);
+  gStyle->SetPadBottomMargin(0.10);
+  gStyle->SetPadRightMargin(0.02);  
+  gStyle->SetPadTopMargin(0.02);  
+  //  gStyle->SetStatFontSize(.0015);
+  gStyle->SetStatX(0.98);
+  gStyle->SetStatY(0.40);
+  gStyle->SetStatW(0.20);
+  gStyle->SetStatH(0.12);
+  gStyle->SetOptFit(111);
+
+  const int n=10;
+

@@ -1,0 +1,999 @@
+/*
+ Muon lifetime of cosmic muon setup
+
+data1.txt
+       
+000001        000    
+000002        000    
+000003        000   
+000004        001   
+000005        012   
+000006        000   
+000007        001   
+000008        010   
+g++ `root-config --cflags` `root-config --glibs` -lMinuit -o fit_example fit_example.C 
+
+*/
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <vector>
+#include <cmath>
+
+#include <TMath.h>
+#include "TF1.h"
+#include "TH1F.h"
+#include "TGraph.h"
+#include "TCanvas.h"
+#include "TMinuit.h"
+#include "TLatex.h"
+#include "TGraphErrors.h"
+#include "TLegend.h"
+#include <TStyle.h>
+
+
+  
+// [in]	option	fit options is given in parameter option.
+
+// "W" Set all weights to 1 for non empty bins; ignore error bars
+//     "WW" Set all weights to 1 including empty bins; ignore error bars
+//     "I" Use integral of function in bin, normalized by the bin volume, instead of value at bin center
+//     "L" Use Loglikelihood method (default is chisquare method)
+//     "WL" Use Loglikelihood method and bin contents are not integer, i.e. histogram is weighted (must have Sumw2() set)
+//     "P" Use Pearson chi2 (using expected errors instead of observed errors)
+//     "U" Use a User specified fitting algorithm (via SetFCN)
+//     "Q" Quiet mode (minimum printing)
+//     "V" Verbose mode (default is between Q and V)
+//     "E" Perform better Errors estimation using Minos technique
+//     "B" User defined parameter settings are used for predefined functions like "gaus", "expo", "poln", "landau". Use this option when you want to fix one or more parameters for these functions.
+//     "M" More. Improve fit results. It uses the IMPROVE command of TMinuit (see TMinuit::mnimpr). This algorithm attempts to improve the found local minimum by searching for a better one.
+//     "R" Use the Range specified in the function range
+//     "N" Do not store the graphics function, do not draw
+//     "0" Do not plot the result of the fit. By default the fitted function is drawn unless the option"N" above is specified.
+//     "+" Add this new fitted function to the list of fitted functions (by default, any previous function is deleted)
+//     "C" In case of linear fitting, don't calculate the chisquare (saves time)
+//     "F" If fitting a polN, switch to minuit fitter
+//     "S" The result of the fit is returned in the TFitResultPtr (see below Access to the Fit Result)
+
+void pmtgain(int ityp=0) {
+  //Range in Y-axis and X-axis
+  // Color option in stat box
+  // c1->Update
+  // Fit examples 
+  // option "0", "Q", "V"
+  // ityp = 0 : no fit, no range set
+  // ityp = 1 : no fit but range set
+  // ityp = 2 : fit with range in Yaxis
+  // ityp = 3 : fit on both graph 
+  // ityp = 4 : fit with range in Xaxis (but it can only reduce the range, not widen 
+
+
+  gStyle->SetPadLeftMargin(0.08);
+  gStyle->SetPadBottomMargin(0.10);
+  gStyle->SetPadRightMargin(0.02);  
+  gStyle->SetPadTopMargin(0.02);  
+  //  gStyle->SetStatFontSize(.0015);
+  gStyle->SetStatX(0.98);
+  gStyle->SetStatY(0.40);
+  gStyle->SetStatW(0.20);
+  gStyle->SetStatH(0.12);
+  gStyle->SetOptFit(111);
+  ifstream.open("efficiency.txt");
+
+  const int n=10;
+  float x[n] ;//  = {7.13409, 7.17242, 7.2233,7.25982 ,7.31522 ,7.35692 ,7.38026 ,7.42774 ,7.44191 ,7.48885};
+  float y[n] ;// = {4.96441, 5.1634, 5.44622,5.67962,6.03591,6.2985 ,6.43539,6.80251,6.9137 ,7.26669};
+  float exl[n]={0} ;//= {.005,.001,.007,.007,.004,.005,.006,.007,.008,.005};
+  float eyl[n];// = {.08,.07,.06,.05,.4,.04,.05,.06,.07,.08};
+
+  float x2[n]  = {7.13409, 7.17242, 7.2233,7.25982 ,7.31522 ,7.35692 ,7.38026 ,7.42774 ,7.44191 ,7.48885};
+  float y2[n]  = {5.96441, 6.1634, 6.44622,6.67962,7.03591,7.2985 ,7.43539,7.80251,7.9137 ,8.26669};
+
+  TCanvas* c1 = new TCanvas("c1", "c1", 600, 600);
+  for()
+    {
+    open>>
+      }
+  TGraphErrors* gry = new TGraphErrors(n,x,y,exl,eyl);
+  gry->SetTitle("TGraphErrors Example");
+  gry->SetMarkerColor(6);
+  gry->SetMarkerStyle(23);
+  gry->SetMarkerSize(1.2);
+  gStyle->SetStatColor(10);
+  gStyle->SetStatTextColor(6);
+  if (ityp>=4) {gry->GetXaxis()->SetRangeUser(7.2, 7.4);}
+  if (ityp>0) { 
+    gry->SetMaximum(8.5);
+    gry->SetMinimum(4.5);   
+  }
+  if (ityp>=2) { 
+    gry->Fit("pol1", "V");
+    gry->Draw("AP");
+  } else {
+    gry->Draw("ALP");
+  }
+  
+  c1->Update();
+  gStyle->SetStatY(0.28);
+  gStyle->SetStatColor(2);
+  gStyle->SetStatTextColor(4);
+  
+  TGraphErrors* gry2 = new TGraphErrors(n,x2,y2,exl,eyl);
+  gry2->SetTitle("TGraphErrors Example");
+  gry2->SetMarkerColor(4);
+  gry2->SetMarkerStyle(23);
+  gry2->SetMarkerSize(1.2);
+  if (ityp>=3) { 
+    gry2->Fit("pol1", "0Q"); //0 : do not plot the fit function
+    //Q : Do not print in pad
+    gry2->Draw("LP:sames");
+  } else {
+    gry2->Draw("LP:same");
+  }
+}
+
+const int nmxchn = 200;
+int nchannel =0;
+double m_data[nmxchn];
+double m_xpos[nmxchn];
+
+Double_t polfunc(Double_t* x, Double_t* par){
+  return par[0]*(1+par[1]*x[0]);
+}
+
+Double_t expox(Double_t* x, Double_t* par){
+  return exp(par[0]+par[1]*x[0]);
+}
+
+Double_t totalfunc(Double_t* x, Double_t* par){
+  //  return expox(x, par) + polfunc(x, &par[2]);
+
+  return exp(par[0]+par[1]*x[0]) + par[2]*(1+par[3]*x[0]);
+
+}
+
+
+void fcnsg(Int_t &npar, Double_t* gin, Double_t &f, Double_t* par, Int_t flag) {
+  
+  double fval=0;
+  double x[2];
+  for (int ij=0; ij<nchannel; ij++) {
+    x[0] = m_xpos[ij];
+    fval += pow( (m_data[ij] - totalfunc(x, par)), 2.) / TMath::Max(1., m_data[ij]);
+  }
+  f = fval;
+}
+
+
+
+using namespace std;
+
+int lifetime(int nentry=2000) {
+  //int main() {
+  
+  gStyle->SetPadTopMargin(.02); //0.09
+  gStyle->SetPadBottomMargin(0.17);
+  gStyle->SetPadLeftMargin(0.12);
+  gStyle->SetPadRightMargin(0.02);
+
+  gStyle->SetPadGridX(3);
+  gStyle->SetPadGridY(3);
+  gStyle->SetGridStyle(2);
+  gStyle->SetNdivisions(909,"XY");
+
+  gStyle->SetOptFit(1111);
+  gStyle->SetOptLogy(0);
+  gStyle->SetStatColor(10);
+
+  gStyle->SetCanvasColor(10);
+  gStyle->SetCanvasBorderMode(0);
+
+  gStyle->SetTitleColor(10);
+  gStyle->SetTitleFontSize(0.09);
+  gStyle->SetTitleOffset(-0.05);
+  gStyle->SetTitleBorderSize(1);
+
+  gStyle->SetStatStyle(1001);
+  gStyle->SetStatX(.99);
+  gStyle->SetStatY(.99);
+  gStyle->SetStatW(.28);
+  gStyle->SetStatH(.24);
+
+  gStyle->SetOptTitle(0);
+  
+  int x1,x2;
+  double y[nmxchn];
+  double timex[nmxchn];
+
+  double xx[nmxchn];
+  double yy[nmxchn];
+ 
+  double scale=0.1;
+  const double shift=5*scale;;
+  int xsiz = 800;
+  int ysiz = 900;
+  TCanvas *c2 = new TCanvas("c2", "exponential", xsiz, ysiz);
+  c2->Divide(2,4,1.e-5, 1.e-5); 
+  
+  
+  TH1F*  histfil = new TH1F("lieftime", "lifetime", nmxchn, scale*5., scale*205.);
+  TH1F*  histfil0;
+  TH1F*  histfil1;
+  TH1F*  histfil2;
+  TH1F*  histfil3;
+  TH1F*  histfil4;
+  TH1F*  histfil5;
+  for(int ij=0;ij<nmxchn;ij++) {
+    timex[ij] = scale*ij;
+    xx[ij] = scale*ij+shift;
+    y[ij] = yy[ij] = 0;
+  }
+
+  ifstream infile("resolution.txt");
+  ofstream outfile("outdata1.txt");
+
+  int itx =0;
+
+  while(!infile.eof() && itx<nentry) {
+    itx++;
+    infile>>x1>>x2; 
+    
+    histfil->Fill(x2*scale);
+    if(x2<nmxchn) {
+      y[x2]++;
+    }
+    if (x2>=shift/scale && x2<nmxchn+shift/scale) {
+      yy[x2-int(shift/scale)]++;
+    }    
+  }
+  
+  histfil->GetXaxis()->SetLabelSize(.075);
+  histfil->GetXaxis()->SetLabelOffset(.01);
+  histfil->GetXaxis()->SetLabelColor(2);
+  histfil->GetXaxis()->SetTitle("Time (#mus)");
+  histfil->GetXaxis()->SetTitleSize(.075);
+  histfil->GetXaxis()->SetTitleOffset(.99);
+  histfil->GetXaxis()->CenterTitle();
+  histfil->GetXaxis()->SetTitleColor(3);
+
+  histfil->GetYaxis()->SetLabelSize(.07);
+
+
+  //  histfil->Draw();
+  histfil0 = (TH1F*) histfil->Clone();
+  histfil1 = (TH1F*) histfil->Clone();
+  histfil2 = (TH1F*) histfil->Clone();
+  histfil3 = (TH1F*) histfil->Clone();
+  histfil4 = (TH1F*) histfil->Clone();
+  histfil5 = (TH1F*) histfil->Clone();
+
+  for (int ij=0; ij<histfil0->GetNbinsX(); ij++) {
+    double error = histfil0->GetBinError(ij+1);
+    if (error <1.0) { histfil0->SetBinError(ij+1, 1.0);}
+  }
+
+  infile.close();
+  const int nsgpr=4;
+  double fitres[nsgpr];
+  double parerr[nsgpr];
+
+  for (int ij=0; ij<nmxchn; ij++) {
+    outfile <<ij<<" "<<y[ij]<<endl;
+  }
+  outfile.close();
+ 
+
+  c2->cd(1);
+  histfil->Fit("expo");
+  
+  TF1* expofun = histfil->GetFunction("expo");
+  cout<<"SIMPLE EXPONENTIAL FIT "<< expofun->GetChisquare()<<" "<<expofun->GetNDF()<<" "<<expofun->GetParameter(0)<<"+-"<<expofun->GetParError(0)<<" "<<expofun->GetParameter(1)<<"+-"<<expofun->GetParError(1)<<endl;
+
+  c2->cd(2);
+  histfil0->Fit("expo");
+
+  c2->cd(3);
+  histfil1->Fit("expo", "L");  
+  
+  c2->cd(4);
+  // histfil->GetBinCenter(1);
+  // histfil->GetBinsError(1);
+  // histfil->SetBinsError(1, errorvalue);
+  // histfil->GetMean();
+  // histfil->GetRMS();
+  double  parx[2]={log(histfil->GetBinContent(1)),  -0.43};
+  
+  TF1* fitx = new TF1("fitex", expox, 0., 100., 2);
+  fitx->SetParameters(parx);
+  histfil2->Fit(fitx);
+
+  c2->cd(5);
+  double  pary[4]={log(histfil->GetBinContent(1)),  -0.43, 10., 0.};
+  TF1* fity = new TF1("fitey", totalfunc, 0., 100., 4);
+  fity->SetParameters(pary);
+  fity->SetParLimits(1, -0.6, -0.3);
+  fity->SetParameter(2, 0.5);
+  //  fity->FixParameter(3, 0.0);
+  
+  histfil3->Fit(fity, "BM");
+
+  c2->cd(6);
+  histfil4->Fit(fity, "BML");
+
+  c2->cd(7);
+  nchannel = min(histfil4->GetNbinsX(), nmxchn);
+  for (int ij=0; ij<nchannel; ij++) {
+    m_data[ij] = histfil4->GetBinContent(ij+1);
+    m_xpos[ij] = histfil4->GetBinCenter(ij+1); // histfil4->GetBinWidth(ij+1)/GetBinLoweredge(ij+1)
+  }
+
+  TMinuit *gMinuit = new TMinuit(nsgpr);
+  
+  TString hname[nsgpr] = {"height", "lifetime", "const", "slope"};
+  double strt[nsgpr] = {log(histfil->GetBinContent(1)),  -0.43, 0., 0.};
+  double alow[nsgpr] = {0.5*strt[0], 0.7*strt[1], -1000., -1.};
+  double ahig[nsgpr] = {2.0*strt[0], 1.5*strt[1],  1000., 1.};
+  double step[nsgpr] = {1.0, 0.01, 0.1, 0.01};
+
+  gMinuit->SetFCN(fcnsg); //Give input function of TMinuit
+
+  double arglist[10];
+  int ierflg = 0;
+  arglist[0] =  1 ;
+  gMinuit->mnexcm("SET ERR", arglist, 1, ierflg);
+  
+  for (int k=0; k<nsgpr; k++) {
+    gMinuit->mnparm(k, hname[k], strt[k], step[k], alow[k], ahig[k],ierflg);
+  }
+  
+  arglist[0] = 0;
+  //	    gMinuit->mnexcm("MIGRAD", arglist, 0, ierflg);
+  gMinuit->mnexcm("MINIMIZE", arglist, 0, ierflg);
+  
+  arglist[0] = 0;
+  gMinuit->mnexcm("IMPROVE", arglist, 0, ierflg);
+  
+  TString chnam;
+  double parv,err,xlo,xup, plerr, mierr, eparab, gcc;
+  int iuit;
+  
+  for (int ij=0; ij<nsgpr; ij++) {
+    gMinuit->mnpout(ij, chnam, parv, err, xlo, xup, iuit);
+    gMinuit->mnerrs(ij, plerr, mierr, eparab, gcc);
+    fitres[ij] = parv;
+    parerr[ij] = err;
+  }
+
+  
+  histfil5->Draw();
+
+  TLatex latex;
+  latex.SetNDC();
+  latex.SetTextSize(0.07);
+  latex.SetTextFont(42);
+  latex.SetTextAlign(11); // 11 left; // 21 centre, // (31); // align right, 22, 23, shift bottom
+  latex.DrawLatex(0.35, 0.8,Form("%g v  %g", int(100*fitres[0])/100., int(100*parerr[0])/100.));
+  latex.DrawLatex(0.35, 0.72,Form("%g  #pm  %g", int(1000*fitres[1])/1000., int(1000*parerr[1])/1000.));
+  latex.DrawLatex(0.35, 0.64,Form("%g  #pm  %g", int(100*fitres[2])/100., int(100*parerr[2])/100.));
+  latex.DrawLatex(0.35, 0.58,Form("%g  #pm  %g", int(100*fitres[3])/100., int(100*parerr[3])/100.));  
+
+  TF1* fitmn = new TF1("fitmn", totalfunc, 0., 210., 4);
+  fitmn->SetParameters(fitres);
+  fitmn->SetLineColor(2);
+  fitmn->SetLineWidth(1);
+  fitmn->Draw("same");
+
+
+  TF1* polf = new TF1("poly", polfunc, 0, 210, 2);
+  polf->SetLineColor(3);
+  polf->SetLineWidth(2);
+  polf->SetParameters(&fitres[2]);
+  polf->Draw("same");
+
+  TF1* expf = new TF1("expy", expox, 0, 210, 2);
+  expf->SetLineColor(4);
+  expf->SetLineWidth(2);
+  expf->SetParameters(fitres);
+  expf->Draw("same"); 
+
+  
+  TGraph* gr1 = new TGraph(nmxchn,xx,yy);
+  gr1->SetTitle("TGraph Example");
+  gr1->SetMarkerColor(7);
+  gr1->SetLineWidth(3);
+  gr1->SetMarkerStyle(23);
+  gr1->SetLineColor(2);
+
+  TF1* fitgr = new TF1("fitgr", totalfunc, 0., 210., 4);
+  double  par[4]={5.87, -0.43, 0., 0.};
+  fitx->SetParameters(par);
+  
+  c2->cd(8);
+  gr1->GetXaxis()->SetLabelSize(.075);
+  gr1->GetYaxis()->SetLabelSize(.075);
+
+  gr1->Fit(fitgr);
+  gr1->Draw("AC*");
+
+  c2->SaveAs("test.pdf");
+   return 0;
+}
+
+
+Double_t solenoidal(Double_t* x, Double_t* par){
+  double xx= par[0] + par[1]*sin(par[2]*x[0]) +par[3]*x[0];
+  double yy=par[4]*sin(par[5]*x[0]);
+  //  if (yy<0) { return xx;
+  //  } else { return xx+yy;}
+  return xx; //+yy;
+}
+
+void muonflux() {
+  
+  const int nbin=67;
+  double xval[nbin];
+  double xerr[nbin];
+  double yerr[nbin];
+  double yval[nbin]={33779, 33454, 32814, 32369, 32564, 32443, 32373, 31987, 32314, 32165, 31945, 32088, 32197, 32254, 32408, 32348, 32560, 32878, 33460, 32857, 33000, 33473, 33287, 33782, 33083, 33156, 32966, 33151, 32287, 32482, 32254, 32279, 32609, 32293, 32576, 32490, 32331, 32447, 32323, 32589, 32750, 33245, 33480, 33320, 33486, 33958, 34002, 33827, 33403, 33338, 33145, 32748, 32937, 32988, 32834, 33020, 32793, 32808, 32978, 33048, 32608, 33296, 33337, 33702, 33508, 33487, 33649};
+  
+  for (int ij=0; ij<nbin; ij++) { xval[ij] = ij; xerr[ij]=0; yerr[ij] = sqrt(yval[ij]);}
+  for (int ij=0; ij<nbin; ij++) { cout <<"ij "<<ij<<" "<<xval[ij]<<" "<<yval[ij]<<endl;}
+
+  TGraphErrors* gry = new TGraphErrors(nbin,xval,yval,xerr,yerr);
+  gry->SetTitle("TGraphErrors Example");
+  gry->SetMarkerColor(6);
+  gry->SetMarkerStyle(23);
+  gry->SetMarkerSize(1.2);
+  gry->Draw("ALP");
+
+  TF1* fitfx = new TF1("abc", solenoidal, -0.5, nbin-0.5, 6);
+  //  double input[3] ={32800, 1000, 10.};
+  //  fitfx->SetParameters(input);
+
+  fitfx->SetParameter(0, 32900);
+  fitfx->SetParameter(1, -460);
+  fitfx->SetParameter(2, 0.25);
+  fitfx->SetParameter(3, 12.0);
+  fitfx->SetParameter(4, -10);
+  fitfx->SetParameter(5, -0.25);
+  gry->Fit("abc", "V","", -0.5, nbin-0.5);
+  //  gry->Draw("AP");
+}
+
+Double_t gausX(Double_t* x, Double_t* par){
+  return par[0]*(TMath::Gaus(x[0], par[1], par[2], kTRUE));
+}
+
+Double_t totalfuncxx(Double_t* x, Double_t* par){
+  return expox(x, par) + gausX(x, &par[2]) + polfunc(x, &par[5]);
+}
+
+void fitexample2() {
+
+  gStyle->SetStatH(.15);
+  gStyle->SetStatW(.25);
+  TH1F*  histfilx = new TH1F("lieftimex", "lifetimex", 255, 0., 255.);
+  
+  double parx[2]={10, -.035};
+  TF1* fitx = new TF1("fitex", expox, 0., 255., 2);
+  fitx->SetParameters(parx);
+
+  double pary[3]={10, 100, 5.};
+  TF1* fity = new TF1("fitgau", gausX, 0., 255., 3);
+  fity->SetParameters(pary);
+
+  double parz[2]={10, -0.003};
+  TF1* fitz = new TF1("fitpol", polfunc, 0., 255., 2);
+  fitz->SetParameters(parz);
+
+  histfilx->FillRandom("fitgau", 40000);
+  histfilx->FillRandom("fitex", 200000);
+  histfilx->FillRandom("fitpol", 200000);
+
+  double par[7]={7, -0.02, 11100, 100, 5., 400, 0.00};
+  TF1* fitall = new TF1("fitall", totalfuncxx, 0., 255., 7);
+  fitall->SetParameters(par);
+  histfilx->Fit("fitall");
+
+  histfilx->SetMinimum(0.);
+  histfilx->Draw();
+
+  parx[0]= fitall->GetParameter(0);
+  parx[1]= fitall->GetParameter(1);
+  fitx->SetParameters(parx);
+  fitx->SetLineColor(2);
+  fitx->Draw("same");
+
+  pary[0]= fitall->GetParameter(2);
+  pary[1]= fitall->GetParameter(3);
+  pary[2]= fitall->GetParameter(4);
+  fity->SetParameters(pary);
+  fity->SetLineColor(3);
+  fity->Draw("same");
+
+  parz[0]= fitall->GetParameter(5);
+  parz[1]= fitall->GetParameter(6);
+  fitz->SetParameters(parz);
+  fitz->SetLineColor(4);
+  fitz->Draw("same");
+
+}
+
+
+void fitexample3() {
+
+  gStyle->SetMarkerColor(2);
+  gStyle->SetMarkerStyle(20);
+  gStyle->SetMarkerSize(.6);
+  gStyle->SetLineWidth(1);
+  gStyle->SetOptFit(1111);
+
+ //fit results with different options
+  const int nx=30;
+  vector<float> xx;
+  vector<float> yy;
+
+  for (int ij=0; ij<nx; ij++) {
+    xx.push_back(ij*1.); yy.push_back(ij*ij*1.);
+  }
+  
+  TGraph* gr1 = new TGraph ( nx, &xx[0], &yy[0] );
+  TGraph* gr2 = new TGraph ( nx-10, &xx[10], &yy[10] );
+  TGraph* gr3 = new TGraph ( nx-10, &xx[0], &yy[0] );
+
+  TCanvas *c2 = new TCanvas("c2", "runfile", 500, 800);
+  c2->Divide(1,2);  
+  
+  c2->cd(1);
+  TF1* pf1 = new TF1("pf1","[0]+[1]*exp(-x/[2])",0.,10.);
+  pf1->SetParameters(0.01,0.03,10);
+  pf1->SetLineColor(2);
+  pf1->SetLineStyle(1);
+  TFitResultPtr ptr = gr1->Fit("pf1","S","",3, 20);
+  gr1->Draw("AP");
+  Int_t fitStatus = ptr;
+  Double_t chi2;
+  Double_t par0;
+  Double_t err0;
+  if (fitStatus==0) { // more details in https://root.cern.ch/root/html/TH1.html#TH1:Fit@1
+    //  if (ptr==0) { // more details in https://root.cern.ch/root/html/TH1.html#TH1:Fit@1
+    chi2   = ptr->Chi2(); // to retrieve the fit chi2
+    par0   = ptr->Parameter(0); // retrieve the value for the parameter 0
+    err0   = ptr->ParError(0); // retrieve the error for the parameter 0
+    ptr->Print("V");     // print full information of fit including covariance matrix
+    ptr->Write();        // store the result in a file
+  }
+
+  cout<<"par1 "<< chi2<<" "<< par0<<" "<<err0<<" "<<endl;
+  c2->cd(2);
+  TF1* pf11 = new TF1("pf11","[0]+[1]*exp(-x/[2])",0.,10.);
+  pf11->SetParameters(0.01,0.03,10);
+  pf11->SetLineColor(2);
+  pf11->SetLineStyle(1);
+  gr3->Fit("pf11","","",1,30);
+  gr3->Draw("AP");
+  
+  chi2 = pf11->GetChisquare();
+  par0 = pf11->GetParameter(0); //value of 1st parameter
+  err0 = pf11->GetParError(0);  //error on first parameter
+  
+  cout<<"par11 "<< chi2<<" "<< par0<<" "<<err0<<" "<<endl;
+}
+
+Double_t powerx(Double_t* x, Double_t* par){
+  return par[0]*pow(x[0], par[1]);
+}
+
+
+void smearx() {
+  gStyle->SetLabelSize(0.075,"XYZ");
+  gStyle->SetNdivisions(606,"XY");
+  gStyle->SetOptStat(1110); 
+  gStyle->SetStatW(0.20);
+  gStyle->SetStatH(0.20);
+
+  gStyle->SetFuncStyle(1001);
+
+  gStyle->SetFuncWidth(1);
+  gStyle->SetFuncColor(2);
+  gStyle->SetHistLineColor(4); 
+  gStyle->SetHistLineWidth(3);
+
+  //  gStyle->SetStatFontSize(.035);
+  
+  TH1F* histx = new TH1F("histx", "1-D hist ", 500, 60., 120.);
+  TH1F* histx1 = new TH1F("histx1", "1-D hist1 ", 1000, 1200., 2900.);
+  for (int ij=0; ij<500000; ij++) {
+    double xx = gRandom->Gaus(45.,1.45);
+    double yy = gRandom->Gaus(45.,2.25);
+    histx->Fill(xx+yy); //2*sqrt(xx*yy));
+    histx1->Fill(xx*yy);
+  }
+
+  TLatex latex;
+  latex.SetNDC();
+  latex.SetTextSize(0.060);
+  latex.SetTextFont(42);
+  latex.SetTextAlign(11); // 11 left; // 21 centre, // (31); // align right, 22, 23, shift bottom
+  TCanvas *c2 = new TCanvas("c2", "runfile", 500, 600);
+  c2->Divide(1,2);
+
+  c2->cd(1);
+  histx->Fit("gaus");
+  TF1* gausfun = histx->GetFunction("gaus");
+  gausfun->SetLineWidth(1);
+  gausfun->SetLineColor(3);
+  latex.DrawLatex(0.14, 0.85, "Expected Width 2.676");
+
+  c2->cd(2);
+  histx1->SetLineColor(1);
+  histx1->Fit("gaus");
+  latex.DrawLatex(0.14, 0.85, "Expected Width 120.45");
+}
+
+
+void cosmic1(int irn=0) {
+  gStyle->SetOptLogy(1);
+  TH1F* histx= new TH1F("XX", "xx", 1099, 1., 1100.);
+  for(int i=0;i<1000000;i++) {
+    double xx=gRandom->Uniform(); //((double)rand())/((double)RAND_MAX); //generates x between (0,   1)
+    
+    //Manibrata
+    double ee=0;
+    if (irn==0) {
+      double e=-1*(xx-1)/50.14;
+      ee=pow(e,-0.589);
+    } else if (irn==1) {
+      //Arpit
+      double tmp2=xx*0.011732;                   //uniform input random number
+      double tmp3=pow(10,-1.7)-1.7*tmp2;
+      double tmp4=-1/1.7;
+      ee=pow(tmp3,tmp4);
+    } else {
+      //Moni
+      double x2=xx*0.011732;                   //uniform random number
+      double x3=pow(10,-1.7)-1.7*x2;
+      double x4=-1/1.7;
+      ee=pow(x3,x4);
+    }
+    histx->Fill(ee);
+    //    cout<<ee<<endl;
+    //    fout<<ee<<endl;//prints to "X.dat"
+  }
+  
+  histx->SetLineColor(2);histx->SetLineWidth(1);
+  TF1* gx1 = new TF1("gx1", powerx, 10., 1000., 2);
+  gx1->SetLineWidth(2);
+  double par[2] ={histx->GetMaximum(), -2.7};
+  gx1->SetParameters(par);
+  histx->Fit(gx1);
+  
+}
+
+void cosmic2(float elow=10, float ehigh = 1000) {
+  //spectrum dN/dE ~ E^{-alpha)
+  //
+  double alpha = 2.7;
+  double alpm1 = alpha - 1.;
+  double anorm = (alpm1)/(pow(elow, -alpm1) - pow(ehigh, -alpm1));
+  
+  gStyle->SetOptLogy(1);
+  gStyle->SetOptLogx(1);
+  gStyle->SetFuncColor(3);
+  int nbin= int(ehigh-elow);
+  if (nbin<1000) nbin=1000;
+  if (nbin>10000) nbin=10000;
+  TH1F* histx= new TH1F("XX", "xx", nbin, elow, ehigh);
+  
+  for(int i=0;i<1000000;i++) {
+    double xx=gRandom->Uniform(); //((double)rand())/((double)RAND_MAX); //generates x between (0,   1)
+    double ee = pow(pow(elow, -alpm1) - (alpm1*xx/anorm), -1/alpm1);
+    histx->Fill(ee);
+  }
+  
+  histx->SetLineColor(2);histx->SetLineWidth(1);
+  TF1* gx1 = new TF1("gx1", powerx, 10., 1000., 2);
+  gx1->SetLineWidth(1);
+  //  gx1->SetLineColor(4);
+  
+  double par[2] ={histx->GetMaximum(), -2.7};
+  gx1->SetParameters(par);
+  histx->Fit(gx1);
+}
+
+
+//Double_t gausX(Double_t* x, Double_t* par){
+ // return par[0]*(TMath::Gaus(x[0], par[1], par[2], kTRUE));
+//}
+
+Double_t landX(Double_t* x, Double_t* par) {
+  return par[0]*(TMath::Landau(x[0], par[1], par[2]));
+}
+
+Double_t completefit(Double_t* x, Double_t* par) {
+  return gausX(x, par) + landX(x, &par[3]);
+}
+
+Double_t langaufun(Double_t *x, Double_t *par) {
+
+  //Fit parameters:
+  //par[0]=Width (scale) parameter of Landau density
+  //par[1]=Most Probable (MP, location) parameter of Landau density
+  //par[2]=Total area (integral -inf to inf, normalization constant)
+  //par[3]=Width (sigma) of convoluted Gaussian function
+  //
+  //In the Landau distribution (represented by the CERNLIB approximation), 
+  //the maximum is located at x=-0.22278298 with the location parameter=0.
+  //This shift is corrected within this function, so that the actual
+  //maximum is identical to the MP parameter.
+  
+  // Numeric constants
+  Double_t invsq2pi = 0.3989422804014;   // (2 pi)^(-1/2)
+  Double_t mpshift  = -0.22278298;       // Landau maximum location
+  
+  // Control constants
+  Double_t np = 100.0;      // number of convolution steps
+  Double_t sc =   5.0;      // convolution extends to +-sc Gaussian sigmas
+  
+  // Variables
+  Double_t xx;
+  Double_t mpc;
+  Double_t fland;
+  Double_t sum = 0.0;
+  Double_t xlow,xupp;
+  Double_t step;
+  Double_t i;
+  
+  
+  // MP shift correction
+  mpc = par[1] - mpshift * par[0]; 
+  
+  // Range of convolution integral
+  xlow = x[0] - sc * par[3];
+  xupp = x[0] + sc * par[3];
+  
+  step = (xupp-xlow) / np;
+  
+  // Convolution integral of Landau and Gaussian by sum
+  for(i=1.0; i<=np/2; i++) {
+    xx = xlow + (i-.5) * step;
+    fland = TMath::Landau(xx,mpc,par[0]) / par[0];
+    sum += fland * TMath::Gaus(x[0],xx,par[3]);
+    
+    xx = xupp - (i-.5) * step;
+    fland = TMath::Landau(xx,mpc,par[0]) / par[0];
+    sum += fland * TMath::Gaus(x[0],xx,par[3]);
+  }
+  
+  return (par[2] * step * sum * invsq2pi / par[3]);
+}
+
+Double_t totalfuncX(Double_t* x, Double_t* par){
+  return gausX(x, par) + langaufun(x, &par[3]);
+}
+
+void fit_landau(){
+  double xval;
+  TH1F* histx = new TH1F("qdc_spectrum", "qdc_spectrum", 256, -0.5, 255.5);
+  ifstream infile("adc_1200.txt");
+  double alen = 0;
+  while(!infile.eof()) {
+    infile>>xval;
+    histx->Fill(xval);
+    alen++;
+  }
+  
+  histx->Draw();
+  double peak = histx->GetMaximumBin();
+  double  pary[7]={700, 51.0, 1.7, 1.7, peak, 0.9*alen, 2.0};
+
+  TF1* fity = new TF1("fitey", totalfuncX, 0.0, 255.0, 7);
+  fity->SetParameters(pary);
+  //  histx->Fit(fity, "BMR");
+  // histx->Fit(fity, "BMR");
+  TFitResultPtr ptr = histx->Fit(fity, "BMR");
+
+  Int_t fitStatus = ptr;
+  if (fitStatus==0) { 
+    cout<<"gain = "<<ptr->Parameter(4)- ptr->Parameter(1)<<endl; 
+  } else {
+    cout<<"fit status = "<<fitStatus<<endl;
+  }
+
+}
+
+// root test6071_dd.root
+void fit_landau1(int ichm=0){
+  char name[100];
+  double xval;
+
+  sprintf(name, "histadc_%i", ichm);
+  TH1F* histx = (TH1F*)gDirectory->Get(name); //"histadc_2");
+  //  histx->Rebin(4);
+  histx->Draw();
+  double peak = -1;
+  double peakv = -1;
+  double xpeak;
+  for (int ij=0; ij<20; ij++) {
+    double aval = histx->GetBinContent(ij+1);
+    if (aval>peakv) {
+      peakv = aval;
+      xpeak = histx->GetBinCenter(ij+1); 
+    }
+  }
+
+  //  double peak = histx->GetMaximumBin();
+  //  double peakv = histx->GetMaximum();
+
+  cout <<"peakv "<< peakv<<" "<<xpeak<<" "<<histx->GetMean()<<" "<<0.9*histx->Integral()<<" "<<0.9*histx->GetRMS()<<endl;
+  //  double  pary[7]={peakv, xpeak, 1.0, 10, histx->GetMean(), 0.9*histx->Integral(), 0.9*histx->GetRMS()};
+  double  pary[7]={0, xpeak, 1.0, 10, histx->GetMean(), 0.9*histx->Integral(), 0.9*histx->GetRMS()};
+
+
+  TF1* fity = new TF1("fitey", totalfuncX, 0.0, 255.0, 7);
+  fity->SetParameters(pary);
+  //  fity->FixParameter(0, 0.0);
+  //  fity->FixParameter(1, xpeak);
+  //  fity->FixParameter(2, 1.0);
+  //  fity->FixParameter(3, 10.0);
+  //  fity->SetParLimits(3, 2., 15.);
+
+  histx->Fit(fity, "BMR");
+  histx->Fit(fity, "BMR");
+  TFitResultPtr ptr = histx->Fit(fity, "BMR");
+
+  Int_t fitStatus = ptr;
+  if (fitStatus==0) { 
+    cout<<"gain = "<<pow( (ptr->Parameter(4)- ptr->Parameter(1))/ ptr->Parameter(6), 2.) <<endl; 
+  } else {
+    cout<<"fit status = "<<fitStatus<<endl;
+  }
+
+  //  cout<<"ichm "<< ichm<<" "<<
+
+}
+
+//par[8]={1.85623e+02,  -1.23233e+02,  1.88817e+01,  1.57838e+02,  -3.07070e+00,  6.40359e+01,  3.42041e-01,  1.51855e-01}; Maximum  = 168.23
+
+
+
+Double_t polandpowfunc(Double_t* x, Double_t* par){
+
+  if (x[0]<0.4) { 
+    return par[5]*(TMath::Gaus(x[0], par[6], par[7], kTRUE));
+  } else if (x[0]<1.4) {
+    return par[0]+par[1]*x[0]+par[2]*x[0]*x[0];
+  } else {
+    return par[3]*pow(x[0], par[4]);
+  }
+}
+
+
+
+void cosmic_muon() {
+
+  gStyle->SetOptLogx(1);
+  gStyle->SetOptLogy(1);
+  gStyle->SetOptFit(0);
+  const int nbins  = 22;
+
+  double binedge[nbins+1] = { 0.2,0.3,0.4,0.55,0.70,0.85,1.0,1.2,1.4,1.6,2.1,2.94,4.12,5.5,7.0,10.0,15.5,23.0,31.1,43.6,61.1,85.6,120.0};
+  double bincontent[nbins] = { 1.4*1.e1,1.68*1.e1,1.72*1.e1,1.66*1.e1,1.56*1.e1,1.48*1.e1,1.30*1.e1,1.20*1.e1,10.2,9.1,6.6,4.12,2.53,1.61,9.0*1.e-1,3.89*1.e-1,1.38*1.e-1,6.3*1.e-2,2.8*1.e-2,9.9*1.e-3,3.6*1.e-3,1.4*1.e-3};
+  double binerror[nbins] = {2.0, 0.8, 0.5, 0.4, 0.4, 0.3, 0.3, 0.3, 0.2, 0.2, 0.1, 0.07, .05, .03, 0.02, 0.008, 0.004, 0.003, 0.001, 0.0007, 0.0003, 0.0002};
+
+  double bincentr[nbins] = { 0.25,0.35,0.47,0.62,0.78,0.92,1.1,1.3,1.5,1.84,2.49,3.49,4.78,6.21,8.37,12.42,18.85,26.68,36.69,51.47,72.08,100.96};
+  double binxerror[nbins];
+
+  TH1F* histx = new TH1F("namex", "namex", nbins, binedge);
+  for (int ij=0; ij<nbins; ij++) {
+    double gap = (binedge[ij+1] - binedge[ij]);
+    binxerror[ij] = 0.5*gap;
+    bincontent[ij] /=gap;
+    binerror[ij] /=gap; 
+    
+    histx->SetBinContent(ij+1,bincontent[ij]);
+    histx->SetBinError(ij+1,binerror[ij]);
+  }
+
+  /*
+  TGraphErrors* gry = new TGraphErrors(nbins, bincentr, bincontent, binxerror, binerror);
+  gry->Draw("AP");
+  TCanvas* c1 = new TCanvas("c1", "c1", 600, 600);
+  c1->Divide(1,2);
+  c1->cd(1);
+  TF1* gx1 = new TF1("gx1", powerx, 1.2, 100., 2);
+  gx1->SetLineWidth(1);
+  double par[2] ={100.0, -2.7};
+  gx1->SetParameters(par);
+  histx->Fit(gx1, "", "", 1.2, 100.);
+  //  gry->Draw("AP");
+  c1->Update();
+  c1->cd(2);
+  TF1* gx2 = new TF1("gx2", "[0]+[1]*x+[2]*x*x", 0.1, 1.2);
+  histx->Fit(gx2, "", "", 0.1, 1.5);
+  //  gry->Draw("AP");
+  */
+  
+  TF1* gx3 = new TF1("gx3", polandpowfunc, 0.01, 100, 8);
+  double parx[8] = {1.85623e+02,  -1.23233e+02,  1.88817e+01,  1.57838e+02,  -3.07070e+00,  6.40359e+01,  3.42041e-01,  1.51855e-01}; //184, -134, 30, 150., -3.0, 168, 0.34, 0.15};
+  gx3->SetParameters(parx);
+  gx3->SetParLimits(6, 0.3, 0.4);
+  
+  //  histx->Fit(gx3, "B");
+    gx3->Draw();
+  cout<<" "<<gx3->GetMaximum()<<endl;;
+
+}
+
+//root tdc_plot2017-01-09-11-02-23.root
+void fiteamx(int alow=10000){
+  TCanvas *c1 = new TCanvas("c1", "runfile", 500, 600);
+  c1->Divide(2,2);
+  char name[100];
+  TH1F* histx[10];
+  TF1 *fn = new TF1("fit_func","exp(-[0]*x+[1])+[2]",alow, 105000);
+  
+  for (int ij=2; ij<6; ij++) { 
+    c1->cd(ij-1);
+    sprintf(name, "scin_%ix", ij);
+    histx[ij] = (TH1F*)gDirectory->Get(name);
+    histx[ij]->Fit(fn, "R");
+  }
+}
+
+Double_t craystal_ball(Double_t* x, Double_t* par){
+  double pi = 3.14159265;
+  
+  double amplitude  = par[0];
+  double amean  = par[1];
+  double sigma = par[2];
+  double an     = par[3];
+  double alpha = par[4];
+
+  double  diff = x[0] - amean;
+  if( diff > -alpha*sigma ) {
+    return amplitude * exp( -0.50 * ( diff/sigma )* ( diff/sigma ));
+  } else {
+    double den = pow(( 1.0 - alpha/an*diff/sigma - (alpha*alpha)/an ), an);
+    return amplitude * exp( -0.50 * alpha*alpha )/den;
+  }
+}
+
+// TFile *_file0 = TFile::Open("reso_plots_new_n1_1_out.root")
+void fit_crystal(int ityp=0) {
+  
+  gStyle->SetOptStat(0);
+  gStyle->SetOptFit(0);
+  TH1F* histx[1000];
+  TF1* funcx[1000];
+
+  double par[5];
+  char name[100];
+
+  TCanvas *c1 = new TCanvas("c1", "runfile", 600, 800);
+  c1->Divide(3,4);  
+
+  for (int ij=0; ij<10; ij++) { 
+    c1->cd(ij+1);
+    sprintf(name, "out_hmomrg_ThetaOut_%i_%i", ityp, ij);
+    histx[ij] = (TH1F*)gDirectory->Get(name);
+    
+    par[0] = histx[ij]->GetMaximum();
+    par[1] = histx[ij]->GetBinCenter(histx[ij]->GetMaximumBin());
+    par[2] = 0.5*histx[ij]->GetRMS();
+    par[3] = 6.5;
+    par[4] = 0.91;
+    sprintf(name, "fitfunc_%i", ij);
+    funcx[ij] = new TF1(name, craystal_ball, -1.5, 1.5, 5);
+    funcx[ij]->SetParameters(par);
+    funcx[ij]->SetParLimits(2, 0.01, 1.);
+    funcx[ij]->SetParLimits(3, 2.0, 20.);
+
+    histx[ij]->Fit(name);
+  }
+}
+
+
+
+
+

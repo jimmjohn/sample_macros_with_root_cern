@@ -1,0 +1,56 @@
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <vector>
+#include <cmath>
+
+#include <TMath.h>
+#include "TF1.h"
+#include "TH1F.h"
+#include "TGraph.h"
+#include "TCanvas.h"
+#include "TMinuit.h"
+#include "TLatex.h"
+#include "TGraphErrors.h"
+#include "TLegend.h"
+#include <TStyle.h>
+
+double single(double *x, double *par) {
+double const pi=4*atan(1.);
+return pow(sin(pi*par[0]*x[0])/(pi*par[0]*x[0]),2);
+}
+
+
+double nslit0(double *x,double *par){
+double const pi=4*atan(1.);
+return pow(sin(pi*par[1]*x[0])/sin(pi*x[0]),2);
+}
+
+double nslit(double *x, double *par){
+cout << "\t" << *x;
+cout << "\t" << *par;
+cout << "\n";
+return single(x,par) * nslit0(x,par);
+}
+
+void slits() {
+float r,ns;
+
+ // request user input
+ cout << "slit width / g ? ";
+ scanf("%f",&r);
+ cout << "# of slits ? ";
+ scanf("%f",&ns);
+ cout <<"interference pattern for "<< ns
+ <<" slits, width/distance: "<<r<<endl;
+
+ // define function and set options
+ TF1 *Fnslit = new TF1("Fnslit",nslit,-5.,5.,2);
+ Fnslit->SetNpx(500);
+ // set parameters, as read in above
+ Fnslit->SetParameter(0			,r);
+ Fnslit->SetParameter(1,ns);
+
+ // draw the interference pattern for a grid with n slits
+ Fnslit->Draw();
+ }

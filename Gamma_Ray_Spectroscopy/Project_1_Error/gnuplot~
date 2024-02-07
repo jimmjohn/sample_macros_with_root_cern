@@ -1,0 +1,53 @@
+set xlabel "Energy"
+set ylabel "Resolution"
+plot 'resolution.txt' with yerrorbar title 'Energy Vs Resolution Plot'
+
+
+
+set xlabel "Energy"
+set ylabel "Efficency"
+plot 'efficency.txt'using 1:2 with points title 'Energy Vs Efficency Plot'
+
+set xlabel "Energy"
+set ylabel "Resolution"
+plot 'resolution.txt' using 1:2:($3) with yerrorbar title 'Energy Vs Resolution Plot'
+
+
+
+Fitting- Resolution
+
+f(x)=p0+(p1/sqrt(x));
+p0=0.0005;
+p1=0.09;
+fit f(x) 'resolution.txt' u 1:2:($3) via p0,p1
+plot 'resolution.txt' using 1:2:($3) with yerrorbar,f(x)
+
+
+
+degrees of freedom    (FIT_NDF)                        : 14
+rms of residuals      (FIT_STDFIT) = sqrt(WSSR/ndf)    : 7.32719
+variance of residuals (reduced chisquare) = WSSR/ndf   : 53.6877
+
+Final set of parameters            Asymptotic Standard Error
+=======================            ==========================
+
+p0              = -0.00387549      +/- 0.0003992    (10.3%)
+p1              = 0.198004         +/- 0.01094      (5.526%)
+
+
+
+Fitting Efficiency
+
+f(x)=c0+(c1/x)+(c2/x*x);
+c0=1;
+c1=100;
+c2=1;
+
+fit f(x) 'efficency.txt' u 1:2 via c0,c1,c2
+plot 'efficency.txt' using 1:2 ,f(x)
+
+
+
+
+
+
