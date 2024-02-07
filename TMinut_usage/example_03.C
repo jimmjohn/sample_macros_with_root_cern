@@ -1,0 +1,103 @@
+//FIT WITH MINUIT
+
+//COMMENTS (II)
+//This is very quick and easy if we just want to do some simple fits 
+//_______________________________________________________________________________________________________________________________________
+//However, this fit has no full control of fitting commands, no control of error definitions, and no control of detailed parameter setup.
+//_______________________________________________________________________________________________________________________________________
+//It's extremely hard to guess initial values, especially in this kind of naïve coding. Hence it is hard to do a more complicated fit, or with complex fitting functions/models.
+// In any case this “root fit” works very well very similar cases.
+//Hard to extract the results in your own favored way. (e.g. what's the area of the Gaussian signal? we have do some integration afterwards)
+//➡ Let’s move on and prepare a fitter based on Minuit directly, as a good practice!
+
+//The results should be fully compatible with previous example
+//In this example, some coding works are required (not just 3 lines!)
+//But now we have the FULL CONTROL of the fitting process, error definitions, parameters setup, etc.
+//Now the function form is defined by ourselves, and one can “read” the area of the signal peak directly. Since it is a “binned fit”, one also needs to consider the bin width!
+//By calling “MINOS”, asymmetric errors can be obtained. 
+//
+
+
+
+TH1D *hist = 0;
+double model(double x, double *par)
+{
+ double mu = par[3];
+ double sigma = par[4];
+ double norm = 1./sqrt(2.*TMath::Pi())/sigma;
+ double G = norm*exp(-0.5 *pow((x-mu)/sigma,2));
+ double BinWidth = hist->GetBinWidth(1);
+ return par[0] + par[1]*x + par[2] * BinWidth * G;
+}
+//The structure:
+//npar – number of currently variable parameters. 
+//gin – the (optional) vector of first derivatives.
+//f – the calculated function value. 
+//par – vector of (constant and variable) parameters. 
+//iflag – indicates the stage of minimization
+
+void fcn(int &npar, double *gin, double &f, double *par, int iflag)
+{
+ f = 0.;
+ for(int i=1;i<=hist->GetNbinsX();i++) 
+ {
+ double x = hist->GetBinCenter(i);
+ double measure = hist->GetBinContent(i);
+ double error = sqrt(measure);
+ double func = model(x,par);
+ double delta = (func - measure)/error;
+ f += delta*delta;
+ }
+}
+
+
+
+void example_03()
+{
+ TFile *fin = new TFile("example_data.root");
+ hist = (TH1D *)fin->Get("hist");
+
+ hist->SetFillColor(kRed-9);
+ hist->SetStats(false);
+ hist->GetXaxis()->SetTitle("Mass");
+
+ TMinuit *gMinuit = new TMinuit(5);
+ gMinuit->SetFCN(fcn);
+//virtual Int_t DefineParameter (Int_t parNo, const char *name, Double_t initVal, Double_t initErr, Double_t lowerLimit, Double_t upperLimit)
+//(parNo,name,initVal,initErr,lowerLimit,upperLimit)
+ gMinuit->DefineParameter(0, "p0", 100., 1., 0., 200.);
+ gMinuit->DefineParameter(1, "p1", -30., 1., -200., 200.);
+ gMinuit->DefineParameter(2, "area", 2000., 1., 0.,20000.);
+ gMinuit->DefineParameter(3, "mean", 1.00, 1., 0.5, 1.5);
+ gMinuit->DefineParameter(4, "width", 0.05, 1., 0.001, 0.15);
+ gMinuit->Command("MIGRAD");
+ gMinuit->Command("MIGRAD");
+ gMinuit->Command("MINOS");
+ double par[5],err[5];
+ for(int i=0;i<5;i++) gMinuit->GetParameter(i,par[i],err[i]);
+ TH1F* curve = new TH1F("curve","curve",hist->GetNbinsX()*5,
+ hist->GetXaxis()->GetXmin(),hist->GetXaxis()->GetXmax());
+ for(int i=1;i<=curve->GetNbinsX();i++) {
+ double x = curve->GetBinCenter(i);
+ double f = model(x,par);
+ curve->SetBinContent(i,f);
+ }
+ curve->SetLineWidth(3);
+ hist->Draw();
+ curve->Draw("csame"); 
+
+
+}
+
+
+//THE LIMITATION OF LEAST-SQUARE METHOD
+//Generally you need to produce histogram(s) before applying the chi-square fit to your data. 
+//There are two obvious problems: 
+//- The fitting definitely depends on your histogram setup.
+ 	//Many bins → error of each bin could be large/or null bins.
+	//Fewer bins → loose of resolutions. 
+//- Null bins are not defined: no uncertainty can be assigned.
+	//(so it cannot work with small number of events...)
+
+
+

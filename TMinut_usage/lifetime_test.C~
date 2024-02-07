@@ -1,0 +1,307 @@
+#include <iostream>
+#include <fstream>
+#include <iomanip>
+#include <vector>
+#include <cmath>
+
+#include <TMath.h>
+#include "TF1.h"
+#include "TH1F.h"
+#include "TGraph.h"
+#include "TCanvas.h"
+#include "TMinuit.h"
+#include "TLatex.h"
+#include "TGraphErrors.h"
+#include "TLegend.h"
+#include <TStyle.h>
+#include "TDirectory.h"
+
+using namespace std;
+
+const int nmxchn = 200;
+int nchannel =0;
+double m_data[nmxchn];
+double m_xpos[nmxchn];
+
+Double_t polfunc(Double_t* x, Double_t* par){
+  return par[0]*(1+par[1]*x[0]);
+}
+
+Double_t expox(Double_t* x, Double_t* par){
+  return exp(par[0]+par[1]*x[0]);
+}
+
+Double_t totalfunc(Double_t* x, Double_t* par){
+  //  return expox(x, par) + polfunc(x, &par[2]);
+
+  return exp(par[0]+par[1]*x[0]) + par[2]*(1+par[3]*x[0]);
+}
+
+void fcnsg(Int_t &npar, Double_t* gin, Double_t &f, Double_t* par, Int_t flag) {  
+  double fval=0;
+  double x[2];
+  for (int ij=0; ij<nchannel; ij++) {
+    x[0] = m_xpos[ij];
+    fval += pow( (m_data[ij] - totalfunc(x, par)), 2.) / TMath::Max(1., m_data[ij]);
+  }
+  f = fval;
+}
+
+
+int lifetime(int nentry=2000) {
+//int main() {
+//  int nentry = 2000;
+
+  gStyle->SetPadTopMargin(.02); //0.09
+  gStyle->SetPadBottomMargin(0.17);
+  gStyle->SetPadLeftMargin(0.12);
+  gStyle->SetPadRightMargin(0.02);
+
+  gStyle->SetPadGridX(3);
+  gStyle->SetPadGridY(3);
+  gStyle->SetGridStyle(2);
+  gStyle->SetNdivisions(909,"XY");
+
+  gStyle->SetOptFit(1111);
+  gStyle->SetOptLogy(0);
+  gStyle->SetStatColor(10);
+
+  gStyle->SetCanvasColor(10);
+  gStyle->SetCanvasBorderMode(0);
+
+  gStyle->SetTitleColor(10);
+  gStyle->SetTitleFontSize(0.09);
+  gStyle->SetTitleOffset(-0.05);
+  gStyle->SetTitleBorderSize(1);
+
+  gStyle->SetStatStyle(1001);
+  gStyle->SetStatX(.99);
+  gStyle->SetStatY(.99);
+  gStyle->SetStatW(.28);
+  gStyle->SetStatH(.24);
+
+  gStyle->SetOptTitle(0);
+  
+  int x1,x2;
+  double y[nmxchn];
+  double timex[nmxchn];
+
+  double xx[nmxchn];
+  double yy[nmxchn];
+ 
+  double scale=0.1;
+  const double shift=5*scale;;
+  int xsiz = 800;
+  int ysiz = 900;
+  TCanvas *c2 = new TCanvas("c2", "exponential", xsiz, ysiz);
+  c2->Divide(2,4,1.e-5, 1.e-5); 
+  
+  
+  TH1F*  histfil = new TH1F("lieftime", "lifetime", nmxchn, scale*5., scale*205.);
+  TH1F*  histfil0;
+  TH1F*  histfil1;
+  TH1F*  histfil2;
+  TH1F*  histfil3;
+  TH1F*  histfil4;
+  TH1F*  histfil5;
+  for(int ij=0;ij<nmxchn;ij++) {
+    timex[ij] = scale*ij;
+    xx[ij] = scale*ij+shift;
+    y[ij] = yy[ij] = 0;
+  }
+
+  ifstream infile("mulifetime.txt");
+  ofstream outfile("outdata_mulife.txt");
+
+  int itx =0;
+
+  while(!infile.eof() && itx<nentry) {
+    itx++;
+    infile>>x1>>x2; 
+    
+    histfil->Fill(x2*scale);
+    if(x2<nmxchn) {
+      y[x2]++;
+    }
+    if (x2>=shift/scale && x2<nmxchn+shift/scale) {
+      yy[x2-int(shift/scale)]++;
+    }    
+  }
+  
+  histfil->GetXaxis()->SetLabelSize(.075);
+  histfil->GetXaxis()->SetLabelOffset(.01);
+  histfil->GetXaxis()->SetLabelColor(2);
+  histfil->GetXaxis()->SetTitle("Time (#mus)");
+  histfil->GetXaxis()->SetTitleSize(.075);
+  histfil->GetXaxis()->SetTitleOffset(.99);
+  histfil->GetXaxis()->CenterTitle();
+  histfil->GetXaxis()->SetTitleColor(3);
+
+  histfil->GetYaxis()->SetLabelSize(.07);
+
+
+  //  histfil->Draw();
+  histfil0 = (TH1F*) histfil->Clone();
+  histfil1 = (TH1F*) histfil->Clone();
+  histfil2 = (TH1F*) histfil->Clone();
+  histfil3 = (TH1F*) histfil->Clone();
+  histfil4 = (TH1F*) histfil->Clone();
+  histfil5 = (TH1F*) histfil->Clone();
+
+  for (int ij=0; ij<histfil0->GetNbinsX(); ij++) {
+    double error = histfil0->GetBinError(ij+1);
+    cout << "error="<<error<<endl;
+    if (error <1.0) { histfil0->SetBinError(ij+1, 1.0);}
+  }
+
+  infile.close();
+  const int nsgpr=4;
+  double fitres[nsgpr];
+  double parerr[nsgpr];
+
+  for (int ij=0; ij<nmxchn; ij++) {
+    outfile <<ij<<" "<<y[ij]<<endl;
+  }
+  outfile.close();
+ 
+
+  c2->cd(1);
+  histfil->Fit("expo");
+  
+  TF1* expofun = histfil->GetFunction("expo");
+  cout<<"SIMPLE EXPONENTIAL FIT "<< expofun->GetChisquare()<<" "<<expofun->GetNDF()<<" "<<expofun->GetParameter(0)<<"+-"<<expofun->GetParError(0)<<" "<<expofun->GetParameter(1)<<"+-"<<expofun->GetParError(1)<<endl;
+
+  c2->cd(2);
+  histfil0->Fit("expo");
+
+  c2->cd(3);
+  histfil1->Fit("expo", "L");  
+  
+  c2->cd(4);
+  // histfil->GetBinCenter(1);
+  // histfil->GetBinsError(1);
+  // histfil->SetBinsError(1, errorvalue);
+  // histfil->GetMean();
+  // histfil->GetRMS();
+  double  parx[2]={log(histfil->GetBinContent(1)),  -0.43};
+  
+  TF1* fitx = new TF1("fitex", expox, 0., 100., 2);
+  fitx->SetParameters(parx);
+  histfil2->Fit(fitx);
+
+  c2->cd(5);
+  double  pary[4]={log(histfil->GetBinContent(1)),  -0.43, 10., 0.};
+  TF1* fity = new TF1("fitey", totalfunc, 0., 100., 4);
+  fity->SetParameters(pary);
+  fity->SetParLimits(1, -0.6, -0.3);
+  fity->SetParameter(2, 0.5);
+  //  fity->FixParameter(3, 0.0);
+  
+  histfil3->Fit(fity, "BM");
+
+  c2->cd(6);
+  histfil4->Fit(fity, "BML");
+
+  c2->cd(7);
+  nchannel = TMath::Min(histfil4->GetNbinsX(), nmxchn);
+  for (int ij=0; ij<nchannel; ij++) {
+    m_data[ij] = histfil4->GetBinContent(ij+1);
+    m_xpos[ij] = histfil4->GetBinCenter(ij+1); // histfil4->GetBinWidth(ij+1)/GetBinLoweredge(ij+1)
+  }
+
+  TMinuit *gMinuit = new TMinuit(nsgpr);
+  
+  TString hname[nsgpr] = {"height", "lifetime", "const", "slope"};
+  double strt[nsgpr] = {log(histfil->GetBinContent(1)),  -0.43, 0., 0.};
+  double alow[nsgpr] = {0.5*strt[0], 0.7*strt[1], -1000., -1.};
+  double ahig[nsgpr] = {2.0*strt[0], 1.5*strt[1],  1000., 1.};
+  double step[nsgpr] = {1.0, 0.01, 0.1, 0.01};
+
+  gMinuit->SetFCN(fcnsg); //Give input function of TMinuit
+
+  double arglist[10];
+  int ierflg = 0;
+  arglist[0] =  1 ;
+  gMinuit->mnexcm("SET ERR", arglist, 1, ierflg);
+  
+  for (int k=0; k<nsgpr; k++) {
+    gMinuit->mnparm(k, hname[k], strt[k], step[k], alow[k], ahig[k],ierflg);
+  }
+  
+  arglist[0] = 0;
+  //	    gMinuit->mnexcm("MIGRAD", arglist, 0, ierflg);
+  gMinuit->mnexcm("MINIMIZE", arglist, 0, ierflg);
+  
+  arglist[0] = 0;
+  gMinuit->mnexcm("IMPROVE", arglist, 0, ierflg);
+  
+  TString chnam;
+  double parv,err,xlo,xup, plerr, mierr, eparab, gcc;
+  int iuit;
+  
+  for (int ij=0; ij<nsgpr; ij++) {
+    gMinuit->mnpout(ij, chnam, parv, err, xlo, xup, iuit);
+    gMinuit->mnerrs(ij, plerr, mierr, eparab, gcc);
+    fitres[ij] = parv;
+    parerr[ij] = err;
+  }
+
+  
+  histfil5->Draw();
+
+  TLatex latex;
+  latex.SetNDC();
+  latex.SetTextSize(0.07);
+  latex.SetTextFont(42);
+  latex.SetTextAlign(11); // 11 left; // 21 centre, // (31); // align right, 22, 23, shift bottom
+  latex.DrawLatex(0.35, 0.8,Form("%g  #pm  %g", int(100*fitres[0])/100., int(100*parerr[0])/100.));
+  latex.DrawLatex(0.35, 0.72,Form("%g  #pm  %g", int(1000*fitres[1])/1000., int(1000*parerr[1])/1000.));
+  latex.DrawLatex(0.35, 0.64,Form("%g  #pm  %g", int(100*fitres[2])/100., int(100*parerr[2])/100.));
+  latex.DrawLatex(0.35, 0.58,Form("%g  #pm  %g", int(100*fitres[3])/100., int(100*parerr[3])/100.));  
+
+  TF1* fitmn = new TF1("fitmn", totalfunc, 0., 210., 4);
+  fitmn->SetParameters(fitres);
+  fitmn->SetLineColor(2);
+  fitmn->SetLineWidth(1);
+  fitmn->Draw("same");
+
+
+  TF1* polf = new TF1("poly", polfunc, 0, 210, 2);
+  polf->SetLineColor(3);
+  polf->SetLineWidth(2);
+  polf->SetParameters(&fitres[2]);
+  polf->Draw("same");
+
+  TF1* expf = new TF1("expy", expox, 0, 210, 2);
+  expf->SetLineColor(4);
+  expf->SetLineWidth(2);
+  expf->SetParameters(fitres);
+  expf->Draw("same"); 
+
+  
+  TGraph* gr1 = new TGraph(nmxchn,xx,yy);
+  gr1->SetTitle("TGraph Example");
+  gr1->SetMarkerColor(7);
+  gr1->SetLineWidth(3);
+  gr1->SetMarkerStyle(23);
+  gr1->SetLineColor(2);
+
+  TF1* fitgr = new TF1("fitgr", totalfunc, 0., 210., 4);
+  double  par[4]={5.87, -0.43, 0., 0.};
+  fitgr->SetParameters(par);
+  
+  c2->cd(8);
+  gr1->GetXaxis()->SetLabelSize(.075);
+  gr1->GetYaxis()->SetLabelSize(.075);
+
+  gr1->GetXaxis()->SetTitle("Time (#mus)");
+  gr1->GetXaxis()->SetTitleOffset(0.9);
+  gr1->GetXaxis()->SetTitleSize(0.075);
+  gr1->GetXaxis()->CenterTitle(); 
+  gr1->GetXaxis()->SetTitleColor(4);
+  gr1->Fit(fitgr);
+  gr1->Draw("AC*");
+
+  c2->SaveAs("test_lifetime.pdf");
+    return 0;
+}

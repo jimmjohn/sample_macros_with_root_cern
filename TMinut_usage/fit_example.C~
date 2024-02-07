@@ -1,0 +1,10 @@
+void example_02()
+{
+ TFile *fin = new TFile("example_data.root");
+ TH1D *hist = (TH1D *)fin->Get("hist");
+
+ hist->SetFillColor(kRed-9);
+ hist->SetStats(false);
+ hist->GetXaxis()->SetTitle("Mass");
+ hist->Draw();
+}

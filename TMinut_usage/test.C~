@@ -1,0 +1,20 @@
+void fcn(int &npar, double *gin, double &f, double *par, int iflag)
+{
+ double x = par[0], y = par[1];
+ f = pow(x-2.,2)+pow(y-3.,2);
+}
+
+void example_01()
+{
+ TMinuit *gMinuit = new TMinuit(2);
+ gMinuit->SetFCN(fcn);
+ gMinuit->DefineParameter(0, "x", 18. , 1., 0., 0.);
+ gMinuit->DefineParameter(1, "y", 20. , 1., 0., 0.);
+ gMinuit->Command("MIGRAD");
+ gMinuit->Command("MIGRAD");
+ double x,y,xerr,yerr;
+ gMinuit->GetParameter(0,x,xerr);
+ gMinuit->GetParameter(1,y,yerr);
+ printf("x: %+.7f +- %.7f\n",x,xerr);
+ printf("y: %+.7f +- %.7f\n",y,yerr);
+}
